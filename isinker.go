@@ -1,4 +1,4 @@
-package logging
+package tinylog
 
 const (
 	Lplain   = 0

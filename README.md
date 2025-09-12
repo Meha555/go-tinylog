@@ -17,13 +17,13 @@ go get github.com/Meha555/go-tinylog
 ## Example
 
 ```go
-stdLogger, err := logging.NewStdLogger(logging.LevelDebug, "STD_LOG_TEST", "[%t] [%c %l] [%f:%C:%L:%g] %m", false, logging.Lcolored|logging.Lstructured)
+stdLogger, err := tinylog.NewStdLogger(tinylog.LevelDebug, "STD_LOG_TEST", "[%t] [%c %l] [%f:%C:%L:%g] %m", false, tinylog.Lcolored|tinylog.Lstructured)
 if err != nil {
     panic(err)
 }
 stdLogger.Debug("This is a debug message")
 
-fileLogger, err := logging.NewFileLogger(logging.LevelDebug, "FILE_LOG_TEST", "[%t] [%c %l] [%f:%C:%L:%g] %m", "./log", "test.log", 1024*1024, true, logging.Lstructured)
+fileLogger, err := tinylog.NewFileLogger(tinylog.LevelDebug, "FILE_LOG_TEST", "[%t] [%c %l] [%f:%C:%L:%g] %m", "./log", "test.log", 1024*1024, true, tinylog.Lstructured)
 if err != nil {
     panic(err)
 }
