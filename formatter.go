@@ -9,13 +9,13 @@ import (
 	"strconv"
 )
 
-type LogFormater struct {
+type logFormatter struct {
 	items []formatItem
 }
 
 // NOTE 为了能返回 out 中的字符串，我们需要使用带缓冲的 io.Writer，这里选择使用 bytes.Buffer。
 // bytes.Buffer 实现了 io.Writer 接口，并且可以通过 String() 方法获取存储的字符串。
-func (f *LogFormater) Format(msg *LogMsg) string {
+func (f *logFormatter) format(msg *logMsg) string {
 	out := bytes.NewBuffer([]byte{})
 	for _, item := range f.items {
 		if err := item.format(out, msg); err != nil {
@@ -26,8 +26,8 @@ func (f *LogFormater) Format(msg *LogMsg) string {
 	return out.String()
 }
 
-func NewLogFormatter(format string) (*LogFormater, error) {
-	f := &LogFormater{}
+func NewLogFormatter(format string) (*logFormatter, error) {
+	f := &logFormatter{}
 	if err := f.parseFormat(format); err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ var formatItemMap = map[byte]formatItem{
 	'%': &precentSignFormatItem{},
 }
 
-func (f *LogFormater) parseFormat(format string) error {
+func (f *logFormatter) parseFormat(format string) error {
 	formatLen := len(format)
 	if formatLen <= 0 {
 		return errors.New("log format string can not be nil")
@@ -86,12 +86,12 @@ func (f *LogFormater) parseFormat(format string) error {
 }
 
 type formatItem interface {
-	format(out io.Writer, msg *LogMsg) error
+	format(out io.Writer, msg *logMsg) error
 }
 
 type levelFormatItem struct{}
 
-func (item *levelFormatItem) format(out io.Writer, msg *LogMsg) error {
+func (item *levelFormatItem) format(out io.Writer, msg *logMsg) error {
 	levelStr, ok := LevelStrs[msg.Level]
 	if !ok {
 		levelStr = "UNKNOWN"
@@ -102,14 +102,14 @@ func (item *levelFormatItem) format(out io.Writer, msg *LogMsg) error {
 
 type categoryFormatItem struct{}
 
-func (item *categoryFormatItem) format(out io.Writer, msg *LogMsg) error {
+func (item *categoryFormatItem) format(out io.Writer, msg *logMsg) error {
 	_, err := io.WriteString(out, msg.Category)
 	return err
 }
 
 type fileFormatItem struct{}
 
-func (item *fileFormatItem) format(out io.Writer, msg *LogMsg) error {
+func (item *fileFormatItem) format(out io.Writer, msg *logMsg) error {
 	// msg.WithFile(msg.callDepth)
 	_, err := io.WriteString(out, filepath.Base(msg.File))
 	return err
@@ -117,7 +117,7 @@ func (item *fileFormatItem) format(out io.Writer, msg *LogMsg) error {
 
 type lineFormatItem struct{}
 
-func (item *lineFormatItem) format(out io.Writer, msg *LogMsg) error {
+func (item *lineFormatItem) format(out io.Writer, msg *logMsg) error {
 	// msg.WithLine(7)
 	lineStr := strconv.Itoa(msg.Line)
 	_, err := io.WriteString(out, lineStr)
@@ -126,7 +126,7 @@ func (item *lineFormatItem) format(out io.Writer, msg *LogMsg) error {
 
 type funcNameFormatItem struct{}
 
-func (item *funcNameFormatItem) format(out io.Writer, msg *LogMsg) error {
+func (item *funcNameFormatItem) format(out io.Writer, msg *logMsg) error {
 	// msg.WithFuncName(7)
 	_, err := io.WriteString(out, msg.FuncName)
 	return err
@@ -134,8 +134,8 @@ func (item *funcNameFormatItem) format(out io.Writer, msg *LogMsg) error {
 
 type goroutineIDFormatItem struct{}
 
-func (item *goroutineIDFormatItem) format(out io.Writer, msg *LogMsg) error {
-	msg.WithGoroutineID()
+func (item *goroutineIDFormatItem) format(out io.Writer, msg *logMsg) error {
+	msg.withGoroutineID()
 	goroutineIDStr := strconv.Itoa(int(msg.GoroutineID))
 	_, err := io.WriteString(out, goroutineIDStr)
 	return err
@@ -143,8 +143,8 @@ func (item *goroutineIDFormatItem) format(out io.Writer, msg *LogMsg) error {
 
 type timestampFormatItem struct{}
 
-func (item *timestampFormatItem) format(out io.Writer, msg *LogMsg) error {
-	msg.WithTimestamp()
+func (item *timestampFormatItem) format(out io.Writer, msg *logMsg) error {
+	msg.withTimestamp()
 	_, err := io.WriteString(out, msg.Timestamp)
 	return err
 }
@@ -164,21 +164,21 @@ func (item *timestampFormatItem) format(out io.Writer, msg *LogMsg) error {
 
 type contentFormatItem struct{}
 
-func (item *contentFormatItem) format(out io.Writer, msg *LogMsg) error {
+func (item *contentFormatItem) format(out io.Writer, msg *logMsg) error {
 	_, err := io.WriteString(out, msg.Content)
 	return err
 }
 
 type newLineFormatItem struct{}
 
-func (item *newLineFormatItem) format(out io.Writer, msg *LogMsg) error {
+func (item *newLineFormatItem) format(out io.Writer, msg *logMsg) error {
 	_, err := io.WriteString(out, string('\n'))
 	return err
 }
 
 type precentSignFormatItem struct{}
 
-func (item *precentSignFormatItem) format(out io.Writer, msg *LogMsg) error {
+func (item *precentSignFormatItem) format(out io.Writer, msg *logMsg) error {
 	_, err := io.WriteString(out, string('%'))
 	return err
 }
@@ -187,7 +187,7 @@ type plainTextFormatItem struct {
 	plainText string
 }
 
-func (item *plainTextFormatItem) format(out io.Writer, msg *LogMsg) error {
+func (item *plainTextFormatItem) format(out io.Writer, msg *logMsg) error {
 	_, err := io.WriteString(out, item.plainText)
 	return err
 }

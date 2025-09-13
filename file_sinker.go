@@ -18,7 +18,7 @@ type fileCounter struct {
 }
 
 type fileSinker struct {
-	formater *LogFormater
+	formater *logFormatter
 
 	filePath   string
 	fileName   string
@@ -47,7 +47,7 @@ func extractIndex(prefix string) (int, bool) {
 	return -1, hasErrSuffix
 }
 
-func NewFileSinker(format, filePath, fileName string, maxLogSize int64, flags int) (*fileSinker, error) {
+func newFileSinker(format, filePath, fileName string, maxLogSize int64, flags int) (*fileSinker, error) {
 	// 将相对路径转换为绝对路径
 	if !path.IsAbs(filePath) {
 		dir, _ := os.Getwd()
@@ -76,26 +76,23 @@ func NewFileSinker(format, filePath, fileName string, maxLogSize int64, flags in
 	return s, nil
 }
 
-func (s *fileSinker) Flags() int {
-	return s.flags
-}
-
-func (s *fileSinker) Sink(msg *LogMsg) (err error) {
+func (s *fileSinker) Sink(msg *logMsg) (err error) {
 	// 文件分割，中途由于文件句柄被切换、关闭，可能造成并发问题，所以不要以协程方式执行
 	s.splitFile(msg.Level)
 	var logStr string
 
 	if s.flags&Lstructured != 0 {
 		// 填充编码为JSON的逻辑，不要indent
-		jsonBytes, err := json.Marshal(*msg)
-		if err != nil {
+		jsonBytes, jsonErr := json.Marshal(*msg)
+		if jsonErr != nil {
 			// 处理JSON序列化错误，可以返回错误或使用默认字符串
-			logStr = fmt.Sprintf("failed to marshal log message: %v", err)
+			logStr = fmt.Sprintf("failed to marshal log message: %v", jsonErr)
+			err = jsonErr
 		} else {
 			logStr = string(jsonBytes)
 		}
 	} else {
-		logStr = s.formater.Format(msg)
+		logStr = s.formater.format(msg)
 	}
 
 	var builder strings.Builder
@@ -125,7 +122,7 @@ func (f *fileSinker) initFile() (err error) {
 	logFileName := path.Join(f.filePath, f.fileName)
 
 	// 检查filePath下面最后一个日志文件的rotateCnt，更新当前的rotateCnt
-	if files, err := os.ReadDir(f.filePath); err == nil {
+	if files, DirErr := os.ReadDir(f.filePath); DirErr == nil {
 		// fmt.Println(files)
 		fileCntors := make([]*fileCounter, 0)
 		for _, file := range files {

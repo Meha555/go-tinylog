@@ -9,10 +9,10 @@ import (
 	"github.com/petermattis/goid"
 )
 
-// LogMsg 单条日志的内容
-// 考虑到性能问题，LogMsg是按需赋值各个字段。
+// logMsg 单条日志的内容
+// 考虑到性能问题，logMsg是按需赋值各个字段。
 // 结构化日志目前固定写死为JSON格式。可选的字段用json的omitempty标记，必需的字段则不使用omitempty标记。
-type LogMsg struct {
+type logMsg struct {
 	Level       int      `json:"level"`
 	Category    string   `json:"category"`
 	File        string   `json:"file,omitempty"`
@@ -46,8 +46,8 @@ type LogMsg struct {
 // 	}
 // }
 
-func NewMsg(level int, category, content string) *LogMsg {
-	return &LogMsg{
+func newMsg(level int, category, content string) *logMsg {
+	return &logMsg{
 		Level:     level,
 		Category:  category,
 		Content:   content,
@@ -58,7 +58,7 @@ func NewMsg(level int, category, content string) *LogMsg {
 	}
 }
 
-func (l *LogMsg) WithFile(skip int) *LogMsg {
+func (l *logMsg) withFile(skip int) *logMsg {
 	if l.File == "unknown" {
 		if pc, file, line, ok := runtime.Caller(skip); ok {
 			l.File = path.Base(file)
@@ -69,7 +69,7 @@ func (l *LogMsg) WithFile(skip int) *LogMsg {
 	return l
 }
 
-func (l *LogMsg) WithLine(skip int) *LogMsg {
+func (l *logMsg) withLine(skip int) *logMsg {
 	if l.Line == -1 {
 		if pc, file, line, ok := runtime.Caller(skip); ok {
 			l.File = runtime.FuncForPC(pc).Name()
@@ -80,7 +80,7 @@ func (l *LogMsg) WithLine(skip int) *LogMsg {
 	return l
 }
 
-func (l *LogMsg) WithFuncName(skip int) *LogMsg {
+func (l *logMsg) withFuncName(skip int) *logMsg {
 	if l.FuncName == "unknown" {
 		if pc, file, line, ok := runtime.Caller(skip); ok {
 			l.File = runtime.FuncForPC(pc).Name()
@@ -91,17 +91,17 @@ func (l *LogMsg) WithFuncName(skip int) *LogMsg {
 	return l
 }
 
-func (l *LogMsg) WithGoroutineID() *LogMsg {
+func (l *logMsg) withGoroutineID() *logMsg {
 	l.GoroutineID = goid.Get()
 	return l
 }
 
-func (l *LogMsg) WithTimestamp() *LogMsg {
+func (l *logMsg) withTimestamp() *logMsg {
 	l.Timestamp = time.Now().Format(time.DateTime)
 	return l
 }
 
-func (l *LogMsg) WithStack(skip int) *LogMsg {
+func (l *logMsg) withStack(skip int) *logMsg {
 	for i := skip; ; i++ { // 跳过log包内的调用栈
 		if pc, fileName, line, ok := runtime.Caller(i); ok {
 			l.Stack = append(l.Stack, fmt.Sprintf("0x%x %s:%d", pc, fileName, line))
@@ -117,12 +117,12 @@ func (l *LogMsg) WithStack(skip int) *LogMsg {
 	return l
 }
 
-func (l *LogMsg) WithCallDepth(skip int) *LogMsg {
+func (l *logMsg) withCallDepth(skip int) *logMsg {
 	l.callDepth = skip
 	return l
 }
 
-// func (l *LogMsg) WithStack() *LogMsg {
+// func (l *LogMsg) withStack() *LogMsg {
 // 	if l.Level != LevelDebug {
 // 		return l
 // 	}

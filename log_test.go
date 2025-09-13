@@ -6,8 +6,8 @@ import (
 )
 
 func TestLogConcurrency(t *testing.T) {
-	logger1, _ := NewStdLogger(LevelInfo, "concurrency", "[%t] [%c %l] [%f:%C:%L:%g] %m", false, Lcolored|Lstructured)
-	logger2, _ := NewStdLogger(LevelInfo, "concurrency", "[%t] [%c %l] [%f:%C:%L:%g] %m", true, Lcolored|Lstructured)
+	logger1, _ := NewStdLogger(LevelInfo, "concurrency", "%t [%c %l] [%f:%C:%L:%g] %m", false, Lcolored|Lstructured)
+	logger2, _ := NewStdLogger(LevelInfo, "concurrency", "%t [%c %l] [%f:%C:%L:%g] %m", true, Lcolored|Lstructured)
 	const goroutineNum = 50
 	var wg sync.WaitGroup
 	for i := 0; i < goroutineNum; i++ {
@@ -34,7 +34,16 @@ func TestLogConcurrency(t *testing.T) {
 }
 
 func TestStdLog(t *testing.T) {
-	stdLogger, _ := NewStdLogger(LevelInfo, "STD_LOG_TEST", "[%t] [%c %l] [%f:%C:%L:%g] %m", false, Lcolored)
+	stdLogger, _ := NewStdLogger(LevelInfo, "STD_LOG_TEST", "%t [%c %l] [%f:%C:%L:%g] %m", false, Lcolored)
+	var msgs = map[int][]string{
+		LevelDebug: {"This", "is", "a", "debug", "message"},
+		LevelInfo:  {"This", "is", "an", "info", "message"},
+		LevelWarn:  {"This", "is", "a", "warning", "message"},
+		LevelError: {"This", "is", "an", "error", "message"},
+		LevelFatal: {"This", "is", "a", "fatal", "message"},
+		LevelPanic: {"This", "is", "a", "panic", "message"},
+	}
+	stdLogger.Info(msgs)
 	t.Run("Print", func(t *testing.T) {
 		stdLogger.Debug("This is a debug message")
 		stdLogger.Info("This is an info message")
@@ -73,7 +82,7 @@ func TestStdLog(t *testing.T) {
 }
 
 func TestFileLog(t *testing.T) {
-	fileLogger, _ := NewFileLogger(LevelDebug, "FILE_LOG_TEST", "[%t] [%c %l] [%f:%C:%L:%g] %m", "./log", "test.log", 1024*1024, false, Lstructured)
+	fileLogger, _ := NewFileLogger(LevelDebug, "FILE_LOG_TEST", "%t [%c %l] [%f:%C:%L:%g] %m", "./log", "test.log", 1024*1024, false, Lstructured)
 
 	t.Run("Print", func(t *testing.T) {
 		fileLogger.Debug("This is a debug message for file log")

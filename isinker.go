@@ -6,7 +6,6 @@ const (
 	Lstructured
 )
 
-type ILogSinker interface {
-	Sink(msg *LogMsg) error
-	Flags() int
+type LogSinker interface {
+	Sink(msg *logMsg) error
 }

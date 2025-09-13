@@ -8,7 +8,7 @@ import (
 )
 
 type stdSinker struct {
-	formater *LogFormater
+	formater *logFormatter
 	flags    int
 	// mtx      sync.Mutex // 不需要，(os.File).Write底层是加了锁的
 }
@@ -44,25 +44,22 @@ const (
 	ColorHiYellowOnRed = "\033[93;41m"
 )
 
-func (s *stdSinker) Flags() int {
-	return s.flags
-}
-
-func (s *stdSinker) Sink(msg *LogMsg) (err error) {
+func (s *stdSinker) Sink(msg *logMsg) (err error) {
 	var builder strings.Builder
 	var logStr, finalLogStr string
 
 	if s.flags&Lstructured != 0 {
 		// 填充编码为JSON的逻辑，不要indent
-		jsonBytes, err := json.Marshal(*msg)
-		if err != nil {
+		jsonBytes, jsonErr := json.Marshal(*msg)
+		if jsonErr != nil {
 			// 处理JSON序列化错误，可以返回错误或使用默认字符串
-			logStr = fmt.Sprintf("failed to marshal log message: %v", err)
+			logStr = fmt.Sprintf("failed to marshal log message: %v", jsonErr)
+			err = jsonErr
 		} else {
 			logStr = string(jsonBytes)
 		}
 	} else {
-		logStr = s.formater.Format(msg)
+		logStr = s.formater.format(msg)
 	}
 
 	if s.flags&Lcolored != 0 {
